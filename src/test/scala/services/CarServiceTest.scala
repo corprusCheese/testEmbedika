@@ -52,18 +52,16 @@ class CarServiceTest
 
   "CarService" - {
     val carService = CarService[IO](carRepositoryDsl, cacheDsl)
-
     "can save" in {
       carService
         .createCar(carCreate)
         .asserting(_ shouldBe ())
     }
-    "throws custom error if repository throws an error when saving" in {
+    "throws custom error if repository throws an error (violates unique) when saving" in {
       when(carRepositoryDsl.addCar(*))
         .thenReturn(
           MonadError[IO, Throwable].raiseError(new Throwable("violates unique"))
         )
-
       carService
         .createCar(carCreate)
         .assertThrows[CarNumberAlreadyExistsInDatabase.type]
@@ -86,6 +84,74 @@ class CarServiceTest
     }
     "can delete" in {
       carService.deleteCar(CarId(1)).asserting(_ shouldBe ())
+    }
+    "throws an error if repository throws an error (not violates unique) when saving" in {
+      when(carRepositoryDsl.addCar(*))
+        .thenReturn(
+          MonadError[IO, Throwable].raiseError(new Throwable())
+        )
+      carService
+        .createCar(carCreate)
+        .assertThrows[Throwable]
+    }
+    "throws an error if cache is not working when getting filtered cars" in {
+      when(cacheDsl.getFilterResult(*)).thenReturn(
+        MonadError[IO, Throwable].raiseError(new Throwable())
+      )
+      carService.filterCars(CarFilter()).assertThrows[Throwable]
+    }
+    "throws an error if db is not working when getting filtered cars" in {
+      when(carRepositoryDsl.carList(*)).thenReturn(
+        MonadError[IO, Throwable].raiseError(new Throwable())
+      )
+      when(cacheDsl.getFilterResult(*)).thenReturn(IO(None))
+      carService.filterCars(CarFilter()).assertThrows[Throwable]
+    }
+    "throws an error if cache is not saving when getting filtered cars" in {
+      when(cacheDsl.getFilterResult(*)).thenReturn(IO(None))
+      when(cacheDsl.addFilterResult(*, *))
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.filterCars(CarFilter()).assertThrows[Throwable]
+    }
+    "throws an error if cache is not updating ttl when getting filtered cars" in {
+      when(cacheDsl.getFilterResult(*)).thenReturn(IO(Some(List())))
+      when(cacheDsl.updateExpireFilterResult(*))
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.filterCars(CarFilter()).assertThrows[Throwable]
+    }
+    "throws an error if cache is not deleting when adding data to db" in {
+      when(cacheDsl.removeCache())
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.createCar(carCreate).assertThrows[Throwable]
+    }
+    "throws an error if cache is not deleting when deleting data in db" in {
+      when(cacheDsl.removeCache())
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.deleteCar(CarId(1)).assertThrows[Throwable]
+    }
+    "throws an error if db throws an exception" in {
+      when(carRepositoryDsl.deleteById(*))
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.deleteCar(CarId(1)).assertThrows[Throwable]
+    }
+    "throws an error if cache throws an exception when getting stats" in {
+      when(cacheDsl.getStats)
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.getStats.assertThrows[Throwable]
+    }
+    "throws an error if cache throws an exception when saving stats from db" in {
+      when(cacheDsl.getStats)
+        .thenReturn(IO(None))
+      when(cacheDsl.addStats(*))
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.getStats.assertThrows[Throwable]
+    }
+    "throws an error if db throws an exception when getting stats" in {
+      when(cacheDsl.getStats)
+        .thenReturn(IO(None))
+      when(carRepositoryDsl.getStats)
+        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+      carService.getStats.assertThrows[Throwable]
     }
   }
 }
