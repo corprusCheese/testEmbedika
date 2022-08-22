@@ -1,6 +1,6 @@
 package routes
 
-import domain.{CarColor, CarId, CarNumber, CarStamp, YearOfRelease}
+import domain._
 import org.http4s.QueryParamDecoder
 import org.http4s.dsl.impl._
 

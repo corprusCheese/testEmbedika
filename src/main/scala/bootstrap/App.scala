@@ -6,35 +6,10 @@ import cats.effect.std.Dispatcher
 import cats.implicits._
 import config._
 import dev.profunktor.redis4cats.effect.Log.NoOp.instance
-import org.http4s.HttpApp
 import org.http4s.circe.JsonDecoder
-import org.http4s.server.{Router, Server}
-import routes._
+import org.http4s.server.Server
 
 object App {
-
-  private def makeHttpApp[F[_]: Monad](
-      appRoutes: AppRoutes[F],
-      graphQLRoutes: GraphQLRoutes[F]
-  ): Resource[F, HttpApp[F]] =
-    Resource.pure[F, HttpApp[F]](
-      Router(
-        "/api/" -> appRoutes.routes,
-        "/graphql/" -> graphQLRoutes.routes
-      ).orNotFound
-    )
-
-  private def buildHttpAppAsResource[F[_]: Applicative: Async: Dispatcher](
-      services: Services[F]
-  ): Resource[F, HttpApp[F]] =
-    for {
-      appRoutes <-
-        AppRoutes.resource[F](services.carServiceDsl, services.logServiceDsl)
-      graphQLRoutes <-
-        GraphQLRoutes
-          .resource[F](services.carServiceDsl, services.logServiceDsl)
-      httpApp <- makeHttpApp(appRoutes, graphQLRoutes)
-    } yield httpApp
 
   private def buildAsResource[F[
       _
@@ -48,7 +23,7 @@ object App {
         config.redisSettings
       )
       services <- Services.resource[F](storages)
-      httpApp <- buildHttpAppAsResource(services)
+      httpApp <- AppRouter.buildAsResource[F](services)
       server <- Server.buildAsResource[F](config.httpServerConfig, httpApp)
     } yield server
 
@@ -66,5 +41,4 @@ object App {
             ExitCode.Error.pure[F]
           })
       )
-
 }

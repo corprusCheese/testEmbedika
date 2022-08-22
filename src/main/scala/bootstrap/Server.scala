@@ -1,13 +1,11 @@
 package bootstrap
 
-import cats.Monad
 import cats.effect.{Async, Resource}
 import com.comcast.ip4s.{Host, Port}
 import config.HttpServerConfig
+import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
-import org.http4s.implicits._
-import org.http4s.server.{Router, Server}
-import org.http4s.{HttpApp, HttpRoutes}
+import org.http4s.server.Server
 
 object Server {
   def buildAsResource[F[_]: Async](

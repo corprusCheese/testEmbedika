@@ -1,15 +1,12 @@
 package routes
 
-import caliban.CalibanError.ExecutionError
 import caliban.GraphQL.graphQL
 import caliban._
 import caliban.interop.cats.implicits._
-import caliban.schema._
 import cats._
 import cats.effect._
 import cats.effect.std.Dispatcher
 import cats.syntax.all._
-import domain._
 import dsls._
 import io.circe.syntax._
 import org.http4s._
