@@ -1,0 +1,51 @@
+version: '3'
+
+volumes:
+  postgres:
+    driver: local
+  cache:
+    driver: local
+
+services:
+  app:
+    container_name: app
+    image: app
+    volumes:
+      - "./:/app"
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - postgres
+      - cache
+    links:
+      - postgres
+      - cache
+
+  postgres:
+    container_name: postgres
+    restart: always
+    image: postgres:13.0-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - DEBUG=false
+      - POSTGRES_DB=auto
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=admin
+      - POSTGRES_URL=jdbc:postgresql://0.0.0.0:5432/auto
+    volumes:
+      - ./project/migrations/init.sql:/docker-entrypoint-initdb.d/init.sql
+  cache:
+    container_name: cache
+    restart: always
+    image: redis:6.2.0
+    ports:
+      - "6379:6379"
+    hostname: redis
+    environment:
+      - DEBUG=false
+    volumes:
+      - cache:/data
