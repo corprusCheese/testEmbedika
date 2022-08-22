@@ -14,7 +14,7 @@ import org.http4s._
 import org.joda.time.DateTime
 import routes.params.cars._
 import services.errors._
-import routes.json._
+import routes.decode._
 
 final case class AppRoutes[F[_]: Applicative: Sync: JsonDecoder](
     carServiceDsl: CarServiceDsl[F],

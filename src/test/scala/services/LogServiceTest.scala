@@ -3,7 +3,7 @@ package services
 import cats.MonadError
 import cats.effect._
 import cats.effect.testing.scalatest.AsyncIOSpec
-import domain.{RequestForLog, RequestUrl}
+import domain.RequestUrl
 import domain.derivatives.RequestForLogCreate
 import dsls.LogRepositoryDsl
 import org.joda.time.DateTime
@@ -28,6 +28,7 @@ class LogServiceTest
 
   before {
     when(logRepositoryDsl.getAllRequests).thenReturn(IO(List()))
+    when(logRepositoryDsl.getRequestStats).thenReturn(IO(List()))
     when(logRepositoryDsl.saveRequest(requestForLogCreate)).thenReturn(IO(true))
   }
 
@@ -41,13 +42,22 @@ class LogServiceTest
     "can get requests" in {
       logService.getAllRequests.asserting(_ shouldBe List())
     }
+    "can get request stats" in {
+      logService.getRequestStats.asserting(_ shouldBe List())
+    }
     "can't get requests if repository is not working" in {
       when(logRepositoryDsl.getAllRequests)
         .thenReturn(MonadError[IO, Throwable].raiseError(t))
 
       logService.getAllRequests
-        .handleErrorWith(e => IO(t))
-        .asserting(_ shouldBe t)
+        .assertThrows[Throwable]
+    }
+    "can't get request stats if repository is not working" in {
+      when(logRepositoryDsl.getRequestStats)
+        .thenReturn(MonadError[IO, Throwable].raiseError(t))
+
+      logService.getRequestStats
+        .assertThrows[Throwable]
     }
     "can't save if repository is not working" in {
       when(logRepositoryDsl.saveRequest(requestForLogCreate))
@@ -55,8 +65,7 @@ class LogServiceTest
 
       logService
         .saveRequest(requestForLogCreate)
-        .handleErrorWith(_ => IO(t))
-        .asserting(_ shouldBe t)
+        .assertThrows[Throwable]
     }
   }
 }

@@ -7,7 +7,7 @@ import org.http4s.{Request, Response}
 import org.http4s.circe.{JsonDecoder, toMessageSyntax}
 import org.http4s.dsl.Http4sDsl
 
-object json {
+object decode {
   implicit class RequestDecoder[F[_]: JsonDecoder: MonadThrow](
       ar: Request[F]
   ) extends Http4sDsl[F] {

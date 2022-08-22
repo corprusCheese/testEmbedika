@@ -60,7 +60,9 @@ class CarServiceTest
     }
     "throws custom error if repository throws an error when saving" in {
       when(carRepositoryDsl.addCar(*))
-        .thenReturn(MonadError[IO, Throwable].raiseError(new Throwable()))
+        .thenReturn(
+          MonadError[IO, Throwable].raiseError(new Throwable("violates unique"))
+        )
 
       carService
         .createCar(carCreate)

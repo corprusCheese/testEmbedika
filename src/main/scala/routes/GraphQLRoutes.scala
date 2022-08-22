@@ -15,7 +15,7 @@ import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.dsl.Http4sDsl
-import routes.json._
+import routes.decode._
 import zio.Runtime
 
 final case class GraphQLRoutes[F[_]: Monad: Async: JsonDecoder: Dispatcher](

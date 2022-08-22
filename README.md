@@ -38,7 +38,7 @@
 
 Написал тесты для CarService и LogService, запускать так
 
-    sbt run test
+    sbt test
 
 <h3> GraphQL для API </h3>
 

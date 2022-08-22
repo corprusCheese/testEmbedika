@@ -18,9 +18,13 @@ final case class CarService[F[_]: Monad: MonadThrow](
       result <-
         carRepositoryDsl
           .addCar(car)
-          .handleErrorWith(_ =>
+          .handleErrorWith(e =>
             MonadError[F, Throwable]
-              .raiseError(CarNumberAlreadyExistsInDatabase)
+              .raiseError(
+                if (e.getMessage.contains("violates unique"))
+                  CarNumberAlreadyExistsInDatabase
+                else e
+              )
           )
       _ <-
         if (result)
